@@ -1,54 +1,156 @@
-
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Letters</title>
-  </head>
-  <body>
-    <h1>Letters: Tae kyung Kim</h1>
-    <p>We write from left to right but why?</p>
-    <div id="output"></div>
-    <script>
-    const outputEl = document.getElementById("output");
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Diary - Tae Kyung Kim</title>
+  <style>
+    body {
+      font-family: "Georgia", serif;
+      background: #fffaf0; /* 편지지 느낌 아이보리 */
+      background-image: 
+        repeating-linear-gradient(
+          to bottom,
+          transparent,
+          transparent 28px,
+          rgba(200, 200, 200, 0.2) 28px,
+          rgba(200, 200, 200, 0.2) 30px
+        );
+      color: #222;
+      padding: 60px;
+      line-height: 1.5;
+      font-size: 20px;
+    }
 
-    document.addEventListener("keydown", function(event) {
+    h1 {
+      font-weight: 500;
+      font-size: 28px;
+    }
+
+    #output {
+      margin-top: 40px;
+      min-height: 200px;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .letter {
+      display: inline-block;
+      vertical-align: middle;
+      transition: font-size 0.2s ease, color 0.3s ease;
+      font-weight: 400;
+      position: relative;
+      letter-spacing: 2px;
+      text-align: center;
+      min-width: 1ch;
+      line-height: 1;
+    }
+
+    /* 긋기 효과 */
+    .scratched::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 2px;
+      background: linear-gradient(
+        90deg,
+        rgba(30, 0, 0, 0.9) 0%,
+        rgba(80, 0, 30, 0.8) 50%,
+        rgba(0, 0, 0, 0.9) 100%
+      );
+      transform: rotate(var(--angle));
+      transform-origin: center;
+      animation: scratch 0.25s ease-out;
+      border-radius: 2px;
+      filter: blur(0.4px);
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+    }
+
+    @keyframes scratch {
+      from { width: 0; opacity: 0; }
+      to { width: 100%; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Diary: Tae Kyung Kim</h1>
+  <p>Hold your feelings on the keyboard — they grow, fade, and leave traces.</p>
+  <div id="output"></div>
+
+  <script>
+    const outputEl = document.getElementById("output");
+    let keyHoldStart = {};
+    const scratchSounds = [
+      "https://actions.google.com/sounds/v1/office/pen_scribble.ogg",
+      "https://actions.google.com/sounds/v1/office/pencil_scribble.ogg"
+    ];
+
+    document.addEventListener("keydown", (event) => {
+      if (keyHoldStart[event.key]) return;
+      keyHoldStart[event.key] = Date.now();
+
       if (event.key === "Backspace") {
-        if (outputEl.lastChild) outputEl.removeChild(outputEl.lastChild);
-      } else if (event.key === "d" || event.key === "D") {
-        addDomElement("span", { text: "BARK!" });
-      } else if (event.key === "c" || event.key === "C") {
-        addDomElement("img", { src: "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUyeTcyNHM4b3Mya3pmczY5MDBldW4zcDE2dGFsYjFvdjBka2RuNGRvdiZlcD12MV9naWZzX3NlYXJjaCZjdT1n/3vcHdyb75qRIA/200w.gif" });
-      } else if (event.key === "v" || event.key === "V") {
-        addDomElement("video", {
-          src: "https://i.imgur.com/Pj87n9Q.mp4",
-          width: "300",
-          height: "300",
-          autoplay: "true",
-          muted: "",
-          controls: ""
-        });
-      } else if (event.key === "s" || event.key === "S") {
-        const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg");
-        audio.play();
-        addDomElement("span", { text: "(sound played)" });
-      } else {
-        addDomElement("span", { text: event.key });
+        const letters = outputEl.querySelectorAll(".letter:not(.scratched)");
+        const last = letters[letters.length - 1];
+        if (last) {
+          last.classList.add("scratched");
+          last.style.setProperty("--angle", `${(Math.random() - 0.5) * 15}deg`);
+        }
+
+        const sound = new Audio(scratchSounds[Math.floor(Math.random() * scratchSounds.length)]);
+        sound.volume = 0.4;
+        sound.play();
+        event.preventDefault();
+        return;
       }
     });
 
-    function addDomElement(tag, attrs) {
-      const el = document.createElement(tag);
-      if (attrs) {
-        for (const k in attrs) {
-          if (k === "text") el.textContent = attrs[k];
-          else el.setAttribute(k, attrs[k]);
-        }
-      }
-      outputEl.appendChild(el);
-      return el;
-    }
+    document.addEventListener("keyup", (event) => {
+      const start = keyHoldStart[event.key];
+      if (!start) return;
+      const duration = Date.now() - start;
+      delete keyHoldStart[event.key];
 
-    </script>
-  </body>
+      if (event.key.length === 1 || event.key === " ") {
+        addLetter(event.key, duration);
+      } else if (event.key === "Enter") {
+        const br = document.createElement("br");
+        outputEl.appendChild(br);
+      }
+    });
+
+    function addLetter(char, duration) {
+      const el = document.createElement("span");
+      el.classList.add("letter");
+
+      el.textContent = char === " " ? " " : char;
+
+      // 글자 크기 증가
+      const intensity = duration / 150;
+      const baseSize = 20;
+      const size = baseSize + intensity * 15;
+      el.style.fontSize = `${size}px`;
+
+      // 색상: 커질수록 회색 → 검정
+      const hue = 0;
+      const sat = 0;
+      const light = Math.max(80 - intensity * 40, 10);
+      el.style.color = `hsl(${hue}, ${sat}%, ${light}%)`;
+
+      // 흔들림: 글자가 커질수록 강도 증가
+      if (intensity > 1) {
+        const shakeAmount = Math.min(intensity * 2, 5); // 최대 5px
+        setInterval(() => {
+          const x = (Math.random() - 0.5) * shakeAmount;
+          const y = (Math.random() - 0.5) * shakeAmount;
+          el.style.transform = `translate(${x}px, ${y}px)`;
+        }, 50);
+      }
+
+      outputEl.appendChild(el);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  </script>
+</body>
 </html>
