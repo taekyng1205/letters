@@ -15,7 +15,7 @@ body {
     rgba(200, 200, 200, 0.2) 30px
   );
   color: #222;
-  padding: 60px;
+  padding: 100px 60px 60px 60px;
   line-height: 1.5;
   font-size: 20px;
   overflow-x: hidden;
@@ -26,9 +26,46 @@ h1 {
   font-weight: 500;
   font-size: 28px;
   opacity: 0.9;
+  margin-top: 20px;
 }
 
-/* 감정 선택 화면 */
+/* 상단 감정 바 — 편지 왼쪽 상단 배치 */
+#mood-bar {
+  position: fixed;
+  top: 40px;
+  left: 60px;
+  display: flex;
+  gap: 28px;
+  z-index: 15;
+  font-family: "Georgia", serif;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
+}
+#mood-bar:hover {
+  opacity: 1;
+}
+#mood-bar button {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #444;
+  cursor: pointer;
+  transition: color 0.4s ease, transform 0.3s ease;
+}
+#mood-bar button:hover {
+  color: #111;
+  transform: scale(1.08);
+}
+#mood-bar button.active {
+  color: #000;
+  font-weight: bold;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
+/* 감정 선택 인트로 */
 #mood-selector {
   position: fixed;
   inset: 0;
@@ -38,46 +75,45 @@ h1 {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 10;
+  z-index: 20;
   transition: opacity 0.6s ease;
 }
-
 #mood-text {
-  font-size: 24px;
+  font-size: 26px;
   color: #444;
   opacity: 0;
   transform: translateY(-20px);
   text-align: center;
   animation: fadeDown 2.2s ease forwards;
+  font-style: italic;
+  letter-spacing: 0.3px;
 }
-
 @keyframes fadeDown {
   0% { opacity: 0; transform: translateY(-20px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-
-/* 버튼 */
 #mood-buttons {
   margin-top: 30px;
   opacity: 0;
   transform: translateY(15px);
   transition: all 1s ease;
   display: flex;
-  gap: 20px;
+  gap: 25px;
+  font-style: italic;
 }
-
 #mood-selector.show-buttons #mood-buttons {
   opacity: 1;
   transform: translateY(0);
 }
-
 #mood-buttons button {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 22px;
   color: #555;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-family: inherit;
+  font-style: italic;
 }
 #mood-buttons button:hover {
   color: #222;
@@ -95,7 +131,6 @@ h1 {
   animation-delay: calc(var(--random-delay) * 1s);
   min-width: 1ch;
 }
-
 .letter.visible {
   opacity: 1;
   transform: translateY(0);
@@ -107,13 +142,31 @@ body.mood-sad {
   color: #555;
 }
 body.mood-sad .letter {
-  animation: sadVibe 1.6s infinite ease-in-out;
+  animation: sadVibe 1.6s infinite ease-in-out, inkFade 1s ease forwards;
+  filter: blur(0.25px);
+  text-shadow:
+    0 0 1px rgba(80, 60, 60, 0.3),
+    0 0 3px rgba(90, 70, 70, 0.2);
 }
 @keyframes sadVibe {
   0%,100% { transform: translate(0,0); }
   25% { transform: translate(-0.4px,0.6px); }
   50% { transform: translate(0.5px,-0.4px); }
   75% { transform: translate(-0.3px,0.3px); }
+}
+@keyframes inkFade {
+  0% {
+    opacity: 0;
+    filter: blur(2px);
+    text-shadow: 0 0 6px rgba(80, 60, 60, 0.4);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0.25px);
+    text-shadow:
+      0 0 1px rgba(80, 60, 60, 0.3),
+      0 0 3px rgba(90, 70, 70, 0.2);
+  }
 }
 
 /* 행복 */
@@ -151,11 +204,7 @@ body.mood-angry .letter {
   left: 0; right: 0;
   top: 50%;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    rgba(30, 0, 0, 0.9),
-    rgba(100, 0, 20, 0.7)
-  );
+  background: linear-gradient(90deg, rgba(30, 0, 0, 0.9), rgba(100, 0, 20, 0.7));
   transform: rotate(var(--angle));
   animation: scratch 0.25s ease-out;
   border-radius: 2px;
@@ -165,10 +214,22 @@ body.mood-angry .letter {
   to { width: 100%; opacity: 1; }
 }
 
-/* 별 */
+/* 여러번 긋기 */
+.scratch-layer {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  top: 50%;
+  height: 1.5px;
+  background: rgba(30, 0, 0, 0.7);
+  transform: rotate(var(--angle));
+  animation: scratch 0.3s ease-out;
+  border-radius: 1px;
+}
 @keyframes drawStar { to { stroke-dashoffset: 0; } }
 </style>
 </head>
+
 <body>
 <div id="mood-selector">
   <div id="mood-text">Choose your feeling today</div>
@@ -179,6 +240,13 @@ body.mood-angry .letter {
   </div>
 </div>
 
+<!-- 감정 바 (왼쪽 상단) -->
+<div id="mood-bar" style="display:none;">
+  <button data-mood="sad">Sad</button>
+  <button data-mood="happy">Happy</button>
+  <button data-mood="angry">Angry</button>
+</div>
+
 <h1>Diary of Feelings</h1>
 <p>Each letter carries a piece of your mood.</p>
 <div id="output"></div>
@@ -186,82 +254,126 @@ body.mood-angry .letter {
 <script>
 const outputEl = document.getElementById("output");
 let keyHoldStart = {};
-
+let backspaceHoldStart = null;
 const selector = document.getElementById("mood-selector");
 const body = document.body;
+const moods = ["sad", "happy", "angry"];
+let currentMoodIndex = 0;
 
 // 버튼 천천히 등장
 setTimeout(() => selector.classList.add("show-buttons"), 2500);
 
+// 인트로 감정 선택
 selector.querySelectorAll("button").forEach(btn => {
   btn.addEventListener("click", () => {
     const mood = btn.getAttribute("data-mood");
-    body.className = `mood-${mood}`;
+    setMood(mood);
     selector.style.opacity = 0;
-    setTimeout(() => selector.remove(), 800);
+    setTimeout(() => {
+      selector.remove();
+      document.getElementById("mood-bar").style.display = "flex";
+    }, 800);
   });
 });
 
+// 상단바 감정 변경
+document.querySelectorAll("#mood-bar button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const mood = btn.getAttribute("data-mood");
+    setMood(mood);
+  });
+});
+
+// 방향키로 감정 전환
+document.addEventListener("keydown", e => {
+  if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault();
+    if (e.key === "ArrowLeft") {
+      currentMoodIndex = (currentMoodIndex - 1 + moods.length) % moods.length;
+    } else {
+      currentMoodIndex = (currentMoodIndex + 1) % moods.length;
+    }
+    setMood(moods[currentMoodIndex]);
+  }
+});
+
+// Backspace hold detection + keydown
 document.addEventListener("keydown", e => {
   if (e.key === "Backspace") {
-    const letters = outputEl.querySelectorAll(".letter:not(.scratched)");
-    const last = letters[letters.length - 1];
-    if (last) {
-      last.classList.add("scratched");
-      last.style.setProperty("--angle", `${(Math.random() - 0.5) * 15}deg`);
-    }
+    if (!backspaceHoldStart) backspaceHoldStart = Date.now();
     e.preventDefault();
     return;
   }
   if (!keyHoldStart[e.key]) keyHoldStart[e.key] = Date.now();
 });
 
+// Backspace release logic + typing
 document.addEventListener("keyup", e => {
+  if (e.key === "Backspace") {
+    if (!backspaceHoldStart) return;
+    const duration = Date.now() - backspaceHoldStart;
+    backspaceHoldStart = null;
+
+    const letters = outputEl.querySelectorAll(".letter:not(.scratched)");
+    const last = letters[letters.length - 1];
+    if (!last) return;
+
+    if (duration < 300) {
+      last.classList.add("scratched");
+      last.style.setProperty("--angle", `${(Math.random() - 0.5) * 15}deg`);
+    } 
+    else if (duration < 1000) {
+      for (let i = 0; i < 3; i++) {
+        const line = document.createElement("div");
+        line.className = "scratch-layer";
+        line.style.setProperty("--angle", `${(Math.random() - 0.5) * 25}deg`);
+        last.appendChild(line);
+      }
+    } 
+    else {
+      const lineCount = Math.floor(Math.random() * 8) + 8;
+      for (let i = 0; i < lineCount; i++) {
+        const line = document.createElement("div");
+        line.className = "scratch-layer";
+        line.style.height = `${Math.random() * 2 + 1}px`;
+        line.style.opacity = `${Math.random() * 0.7 + 0.3}`;
+        line.style.setProperty("--angle", `${(Math.random() - 0.5) * 90}deg`);
+        line.style.background = `rgba(40, 0, 0, ${Math.random() * 0.8 + 0.2})`;
+        last.appendChild(line);
+      }
+    }
+    return;
+  }
+
   const start = keyHoldStart[e.key];
   if (!start) return;
   const duration = Date.now() - start;
   delete keyHoldStart[e.key];
-
-  if (e.key.length === 1 || e.key === " ") addLetter(e.key, duration);
-  else if (e.key === "Enter") outputEl.appendChild(document.createElement("br"));
+  if (e.key.length === 1 || e.key === " ")
+    addLetter(e.key, duration);
+  else if (e.key === "Enter")
+    outputEl.appendChild(document.createElement("br"));
 });
+
+function setMood(mood) {
+  body.className = `mood-${mood}`;
+  document.querySelectorAll("#mood-bar button").forEach(b => b.classList.remove("active"));
+  const activeBtn = document.querySelector(`#mood-bar button[data-mood="${mood}"]`);
+  if (activeBtn) activeBtn.classList.add("active");
+  currentMoodIndex = moods.indexOf(mood);
+}
 
 function addLetter(char, duration) {
   const el = document.createElement("span");
   el.classList.add("letter");
   el.style.setProperty("--random-delay", Math.random().toFixed(2));
 
-  if (char === "*") {
-    const isLong = duration > 400;
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    const size = isLong ? 70 : 40;
-    svg.setAttribute("width", size);
-    svg.setAttribute("height", size);
-    svg.setAttribute("viewBox", "0 0 120 120");
-    svg.style.verticalAlign = "middle";
-    svg.style.margin = "0 4px";
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d","M60 10 L75 45 L115 45 L82 70 L95 110 L60 85 L25 110 L38 70 L5 45 L45 45 Z");
-    path.setAttribute("fill","none");
-    path.setAttribute("stroke","#d00");
-    path.setAttribute("stroke-width", isLong ? "6" : "3.5");
-    path.setAttribute("stroke-linecap","round");
-    path.setAttribute("stroke-linejoin","round");
-    path.style.strokeDasharray = 600;
-    path.style.strokeDashoffset = 600;
-    path.style.animation = "drawStar 1.2s ease forwards";
-    svg.appendChild(path);
-    el.appendChild(svg);
-  } else {
-    el.textContent = char === " " ? " " : char;
-  }
-
   const intensity = duration / 150;
   const baseSize = 20;
   const size = baseSize + intensity * 15;
   el.style.fontSize = `${size}px`;
   el.style.transformOrigin = "center center";
+  el.textContent = char === " " ? " " : char;
 
   outputEl.appendChild(el);
   setTimeout(() => el.classList.add("visible"), 10);
@@ -270,4 +382,3 @@ function addLetter(char, duration) {
 </script>
 </body>
 </html>
-
